@@ -1,0 +1,135 @@
+/* ===========================
+   Global Styles
+=========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background: #f4f7fc;
+    text-align: center;
+    padding: 30px;
+    color: #333;
+}
+
+/* ===========================
+   Logo
+=========================== */
+
+img {
+    margin-bottom: 10px;
+}
+
+/* ===========================
+   Headings
+=========================== */
+
+h1 {
+    color: #2e7d32;
+    margin-bottom: 15px;
+}
+
+h2 {
+    color: #444;
+    margin: 20px 0;
+}
+
+h3 {
+    color: #2e7d32;
+    margin: 15px 0;
+}
+
+hr {
+    margin: 20px auto;
+    width: 80%;
+    border: 1px solid #ddd;
+}
+
+/* ===========================
+   Chat Box
+=========================== */
+
+#chatBox {
+    width: 80%;
+    max-width: 800px;
+    height: 350px;
+    padding: 15px;
+    border: 2px solid #2e7d32;
+    border-radius: 10px;
+    resize: none;
+    background: #ffffff;
+    font-size: 15px;
+    outline: none;
+    overflow-y: auto;
+}
+
+/* ===========================
+   Input Field
+=========================== */
+
+#message {
+    width: 65%;
+    max-width: 650px;
+    padding: 12px;
+    border: 2px solid #2e7d32;
+    border-radius: 8px;
+    outline: none;
+    font-size: 15px;
+    margin-top: 15px;
+}
+
+/* ===========================
+   Button
+=========================== */
+
+button {
+    padding: 12px 25px;
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-left: 10px;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1b5e20;
+    transform: scale(1.05);
+}
+
+/* ===========================
+   Previous Chat
+=========================== */
+
+p {
+    color: #666;
+    font-size: 16px;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width: 768px) {
+
+    #chatBox {
+        width: 95%;
+    }
+
+    #message {
+        width: 95%;
+        margin-bottom: 10px;
+    }
+
+    button {
+        width: 95%;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}

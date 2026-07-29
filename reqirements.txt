@@ -1,0 +1,36 @@
+CustomerSupportBot/
+
+│
+├── app.py
+├── config.py
+├── db.py
+├── auth.py
+├── chatbot.py
+├── dashboard.py
+├── models.py
+│
+├── static/
+│      │
+│      ├── css/
+│      │      login.css
+│      │      dashboard.css
+│      │      chatbot.css
+│      │
+│      ├── js/
+│      │      login.js
+│      │      dashboard.js
+│      │      chatbot.js
+│      │
+│      └── images/
+│
+├── templates/
+│      │
+│      ├── login.html
+│      ├── register.html
+│      ├── dashboard.html
+│      └── chatbot.html
+│
+├── database/
+│      schema.sql
+│
+└── requirements.txt

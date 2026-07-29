@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Customer Support Login</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+
+</head>
+
+<body>
+
+    <div class="login-box">
+
+        <h1>Customer Support Chatbot</h1>
+
+        <form method="POST" action="/login">
+
+    <label>Email</label>
+
+    <input
+        type="email"
+        name="email"
+        placeholder="Enter your email"
+        required>
+
+    <label>Password</label>
+
+    <input
+        type="password"
+        name="password"
+        placeholder="Enter password"
+        required>
+
+    <button type="submit">
+        Login
+
+    </button>
+    <p>Don't have an account? <a href="/register">Register here</a>
+    </p>
+
+</form>
+
+    </div>
+
+</body>
+
+</html>

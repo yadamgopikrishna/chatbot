@@ -1,0 +1,5 @@
+instantclient_19_31/
+venv/
+.venv/
+__pycache__/
+*.pyc

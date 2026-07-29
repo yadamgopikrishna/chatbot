@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+</head>
+
+<body>
+    <img src="{{ url_for('static', filename='images/logo.png') }}" width="80">
+
+    <h1>Customer Support Chatbot</h1>
+
+    <hr>
+
+    <h2>Welcome {{ name }}</h2>
+
+    <hr>
+
+    <h3>Previous Chats</h3>
+
+    <p>No Chats Available</p>
+
+    <hr>
+
+    <h3>AI Chat</h3>
+
+    <textarea id="chatBox" rows="15" cols="80" readonly>
+</textarea>
+    <br><br>
+    <form onsubmit="return false;">
+        <input type="text" id="message" name="message" placeholder="Type your message" size="70">
+
+
+        <button type="submit" style="cursor:pointer;" onclick="sendMessage()">
+
+            Send
+
+        </button>
+
+    </form>
+    <script>
+        async function sendMessage() {
+
+            let message = document.getElementById("message").value;
+
+            document.getElementById("chatBox").value +=
+                "You : " + message + "\n";
+
+            document.getElementById("message").value = "";
+
+            let response = await fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: message
+                })
+            });
+
+            let data = await response.json();
+
+            document.getElementById("chatBox").value +=
+                "AI : " + data.response + "\n\n";
+
+            document.getElementById("chatBox").scrollTop =
+                document.getElementById("chatBox").scrollHeight;
+        }
+    </script>
+
+
+</body>
+
+</html>
