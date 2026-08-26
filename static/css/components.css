@@ -1058,3 +1058,183 @@
         font-size: 26px;
     }
 }
+
+/* --------------------------------------------------------------------------
+   Resume Studio & ATS Analyzer
+   -------------------------------------------------------------------------- */
+.tab-strip {
+    display: flex;
+    gap: 8px;
+    background: var(--bg-tertiary);
+    padding: 6px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    border: 1px solid var(--border-subtle);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.tab-btn.active {
+    background: var(--accent-gradient);
+    color: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+
+.resume-results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.ats-score-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+    box-shadow: var(--shadow-sm);
+}
+
+.ats-score-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: var(--radius-full);
+    border: 3.5px solid #10b981;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--bg-tertiary);
+}
+
+.score-number {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.ats-verdict-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.ats-verdict-desc {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.resume-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.analysis-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+}
+
+.analysis-card h4 {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.tags-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag-matched {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid #10b981;
+    color: #10b981;
+    border-radius: var(--radius-full);
+}
+
+.tag-missing {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    background: rgba(244, 63, 94, 0.15);
+    border: 1px solid #f43f5e;
+    color: #f43f5e;
+    border-radius: var(--radius-full);
+}
+
+.analysis-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.analysis-list.green li::marker {
+    color: #10b981;
+}
+
+.analysis-list.orange li::marker {
+    color: #f59e0b;
+}
+
+.bullet-diff-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.diff-before {
+    color: var(--text-muted);
+}
+
+.diff-after {
+    color: var(--text-primary);
+    background: rgba(168, 85, 247, 0.12);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent-secondary);
+}
+
+.diff-rationale {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+

@@ -17,7 +17,8 @@ from services.spreadsheet_service import analyze_spreadsheet
 from services.vision_service import perform_image_forensics
 from services.translation_service import detect_language
 from services.rag_service import compute_tf_idf_similarity
-from services.ai_service import is_image_generation_query
+from services.ai_service import is_image_generation_query, is_resume_generation_query
+from services.resume_service import analyze_resume, generate_professional_resume, create_resume_docx
 from PIL import Image
 import pandas as pd
 
@@ -111,6 +112,52 @@ def test_image_generation_intent():
     print("Image generation intent detected correctly:", prompt)
 
 
+def test_resume_analysis_and_generation():
+    print("\n--- Testing Resume Analysis & Word Doc Generation ---")
+    sample_resume = """
+    John Doe
+    john@example.com | +1 555 123 4567 | San Francisco, CA
+    
+    Professional Summary:
+    Full-Stack Developer with 4 years of experience building Python and React applications.
+    
+    Skills:
+    Python, Flask, JavaScript, React, SQL, Git, Docker
+    
+    Experience:
+    Software Engineer at Tech Innovations (2021 - Present)
+    - Developed backend APIs using Flask and PostgreSQL.
+    - Improved page load speeds by 30%.
+    """
+
+    # 1. Test Analysis
+    res_analysis = analyze_resume(sample_resume, target_role="Senior Full-Stack Engineer")
+    assert res_analysis.get("success") is True
+    assert "ats_score" in res_analysis
+    assert "matched_skills" in res_analysis
+    assert "bullet_improvements" in res_analysis
+    print("ATS Score calculated:", res_analysis.get("ats_score"))
+    print("Matched skills count:", len(res_analysis.get("matched_skills", [])))
+
+    # 2. Test Generation
+    gen_result = generate_professional_resume({
+        "name": "Jane Smith",
+        "target_role": "Senior Cloud Architect",
+        "skills": "AWS, Kubernetes, Terraform, Python, Docker, Microservices",
+        "experience": "Lead Architect at CloudSys (2020-Present)",
+        "email": "jane@example.com"
+    })
+    assert gen_result.get("success") is True
+    assert "docx_url" in gen_result
+    assert os.path.exists(os.path.join("uploads", gen_result["filename"]))
+    print("Generated Word Resume file:", gen_result["filename"])
+
+    # 3. Test Intent detection
+    is_res, role = is_resume_generation_query("Generate a resume for a Senior Cloud Architect")
+    assert is_res is True
+    assert "Cloud" in role
+
+
 def test_rag_semantic_search():
     print("\n--- Testing RAG TF-IDF Semantic Retrieval ---")
     chunks = [
@@ -141,6 +188,16 @@ def test_flask_endpoints():
     assert "languages" in data
     print("GET /api/settings returned models and languages correctly")
 
+    # Test Resume analyze endpoint
+    resp = client.post("/api/resume/analyze", json={
+        "resume_text": "Alex Dev - Python, React, Docker. Software Engineer with 3 years experience.",
+        "target_role": "Backend Engineer"
+    })
+    assert resp.status_code == 200
+    data = json.loads(resp.data)
+    assert data.get("success") is True
+    print("POST /api/resume/analyze returned 200 OK")
+
     # Test legacy chat API
     resp = client.post("/chat", json={"message": "Hello AI"})
     assert resp.status_code == 200
@@ -156,6 +213,7 @@ if __name__ == "__main__":
     test_spreadsheet_analysis()
     test_image_forensics()
     test_image_generation_intent()
+    test_resume_analysis_and_generation()
     test_rag_semantic_search()
     test_flask_endpoints()
     print("\n=======================================================")

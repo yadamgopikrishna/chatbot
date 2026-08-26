@@ -11,8 +11,28 @@ from services.doc_service import extract_document_data
 from services.spreadsheet_service import analyze_spreadsheet
 from services.vision_service import perform_image_forensics, extract_image_metadata
 from services.image_gen_service import generate_image_ai
+from services.resume_service import analyze_resume, generate_professional_resume
 
 logger = logging.getLogger(__name__)
+
+
+def is_resume_generation_query(message):
+    """
+    Checks if user prompt is asking to build or generate a resume.
+    """
+    if not message:
+        return False, ""
+    msg_lower = message.strip().lower()
+    patterns = [
+        r"^(?:generate|create|build|make|write)\s+(?:an?\s+)?(?:resume|cv|curriculum vitae)\s+(?:for|as)?\s*(.+)$",
+        r"^(?:resume|cv)\s+(?:for|of)\s+(.+)$"
+    ]
+    for p in patterns:
+        m = re.match(p, msg_lower, re.IGNORECASE)
+        if m:
+            extracted = message.strip()[m.start(1):m.end(1)].strip()
+            return True, extracted if extracted else message.strip()
+    return False, ""
 
 
 def is_image_generation_query(message):
@@ -165,6 +185,31 @@ def process_user_query(
                 "forensics": None,
                 "detected_language": "en",
                 "error": not gen_res.get("success")
+            }
+
+    # 0.1 Check for Resume Generation intent
+    is_res_gen, res_prompt = is_resume_generation_query(message)
+    if is_res_gen and not attachments:
+        res_obj = generate_professional_resume(
+            {"target_role": res_prompt or "Software Engineer", "skills": "System Architecture, Python, Cloud, Full-Stack", "name": "Candidate"},
+            custom_api_key=custom_api_key
+        )
+        docx_url = res_obj.get("docx_url", "")
+        resume_md = f"### 📝 Generated ATS-Optimized Resume\n\n**Role Target:** *{res_prompt}*\n\n<a href=\"{docx_url}\" download class=\"msg-btn btn-compare\" style=\"display: inline-flex; margin: 10px 0 16px;\">⬇️ Download Word Resume (.docx)</a>\n\n---\n\n{res_obj.get('markdown', '')}"
+
+        if stream:
+            def _res_stream_gen():
+                yield {"token": resume_md, "full_text": resume_md, "done": True, "citations": []}
+            return _res_stream_gen(), "gemini-2.5-flash", None, None
+        else:
+            return {
+                "response": resume_md,
+                "model": "gemini-2.5-flash",
+                "citations": [],
+                "chart_data": None,
+                "forensics": None,
+                "detected_language": "en",
+                "error": False
             }
 
     detected_lang = detect_language(message)

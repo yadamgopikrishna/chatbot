@@ -45,6 +45,7 @@ from routes.document_routes import document_bp
 from routes.image_routes import image_bp
 from routes.spreadsheet_routes import spreadsheet_bp
 from routes.settings_routes import settings_bp
+from routes.resume_routes import resume_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(chat_bp)
@@ -52,6 +53,7 @@ app.register_blueprint(document_bp)
 app.register_blueprint(image_bp)
 app.register_blueprint(spreadsheet_bp)
 app.register_blueprint(settings_bp)
+app.register_blueprint(resume_bp)
 
 
 @app.route("/dashboard")

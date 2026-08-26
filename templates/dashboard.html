@@ -60,6 +60,11 @@
         </div>
 
         <div class="sidebar-footer">
+            <button class="footer-nav-btn" onclick="openModal('resumeModal');">
+                <span class="footer-btn-icon">📝</span>
+                <span class="footer-btn-text">Resume Studio</span>
+                <span class="footer-btn-badge">HOT</span>
+            </button>
             <button class="footer-nav-btn" onclick="openModal('imageGenModal');">
                 <span class="footer-btn-icon">🎨</span>
                 <span class="footer-btn-text">AI Image Studio</span>
@@ -153,11 +158,19 @@
                 <h1 class="welcome-title">How can OG assist you today?</h1>
                 
                 <p class="welcome-subtitle">
-                    Analyze documents, generate artwork, explore spreadsheets, inspect images, and communicate seamlessly across multiple languages.
+                    Analyze resumes, generate ATS-optimized CVs, create AI artwork, explore spreadsheets, analyze documents, and query in multiple languages.
                 </p>
 
                 <!-- Clean Prompts Grid -->
                 <div class="quick-prompts-grid">
+                    <div class="quick-prompt-card" onclick="openModal('resumeModal')">
+                        <div class="card-icon-bubble">📝</div>
+                        <div class="card-text-content">
+                            <div class="quick-prompt-title">Resume Analyzer & Builder</div>
+                            <div class="quick-prompt-desc">ATS keyword scoring, bullet improvements & Word .docx generation</div>
+                        </div>
+                    </div>
+
                     <div class="quick-prompt-card" onclick="setPrompt('Generate an image of a futuristic neon city in cyberpunk style')">
                         <div class="card-icon-bubble">🎨</div>
                         <div class="card-text-content">
@@ -181,14 +194,6 @@
                             <div class="quick-prompt-desc">Auto-generate interactive Chart.js charts & stats</div>
                         </div>
                     </div>
-
-                    <div class="quick-prompt-card" onclick="setPrompt('ఈ పత్రంలోని ముఖ్యమైన విషయాలను తెలుగులో సులభంగా వివరించండి.')">
-                        <div class="card-icon-bubble">🌐</div>
-                        <div class="card-text-content">
-                            <div class="quick-prompt-title">Multilingual Assistance</div>
-                            <div class="quick-prompt-desc">Ask in Telugu, Hindi, or any language with native fluently translated responses</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -201,7 +206,7 @@
             <div class="dropzone-overlay" id="dropzoneOverlay">
                 <div class="dropzone-box">
                     <div class="dropzone-icon">📥</div>
-                    <div class="dropzone-text">Drop PDFs, DOCX, Spreadsheets, or Images to Attach</div>
+                    <div class="dropzone-text">Drop PDFs, DOCX, Resumes, Sheets, or Images to Attach</div>
                 </div>
             </div>
 
@@ -219,6 +224,16 @@
                     </svg>
                 </button>
 
+                <button class="composer-tool-btn" onclick="openModal('resumeModal')" title="Open Resume Studio">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </button>
+
                 <button class="composer-tool-btn" onclick="openModal('imageGenModal')" title="Generate AI Image">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -227,7 +242,7 @@
                     </svg>
                 </button>
 
-                <textarea id="chatInput" class="composer-textarea" rows="1" placeholder="Ask OG anything, attach files, or generate images (e.g. 'draw a cute cat')..."></textarea>
+                <textarea id="chatInput" class="composer-textarea" rows="1" placeholder="Ask OG anything, attach files, analyze resumes, or generate images..."></textarea>
 
                 <div class="composer-tools">
                     <button class="composer-tool-btn" id="micBtn" title="Voice Input">
@@ -248,7 +263,7 @@
             </div>
             
             <div class="composer-disclaimer">
-                OG Multimodal Assistant • Real-time AI Vision, Documents & Image Generation
+                OG Multimodal Assistant • Real-time AI Vision, Resumes, Documents & Image Generation
             </div>
         </div>
 
@@ -259,6 +274,124 @@
 <!-- ========================================================================
      Modals
      ======================================================================== -->
+
+<!-- Resume Studio & ATS Analyzer Modal -->
+<div class="modal-backdrop" id="resumeModal">
+    <div class="modal-window" style="max-width: 860px;">
+        <div class="modal-header">
+            <div class="modal-header-title">
+                <span class="modal-icon">📝</span>
+                <h3>OG AI Resume Studio & ATS Optimizer</h3>
+            </div>
+            <button class="icon-btn" onclick="closeModal('resumeModal')">✕</button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Tabs -->
+            <div class="tab-strip">
+                <button class="tab-btn active" id="tabResumeAnalyze" onclick="ResumeStudio.switchTab('analyze')">🔍 Resume ATS Analyzer</button>
+                <button class="tab-btn" id="tabResumeGenerate" onclick="ResumeStudio.switchTab('generate')">✨ AI Resume Generator (.docx)</button>
+            </div>
+
+            <!-- Tab 1: Analyzer View -->
+            <div id="resumeAnalyzeView">
+                <div class="settings-form-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-field">
+                            <label>Upload Resume File (PDF / Word)</label>
+                            <input type="file" id="resumeFileInput" accept=".pdf,.docx,.doc,.txt" class="input-styled" style="padding: 9px 12px;">
+                        </div>
+                        <div class="form-field">
+                            <label>Target Role Title (e.g. Senior Cloud Engineer)</label>
+                            <input type="text" id="resumeTargetRoleInput" placeholder="e.g. Lead Full-Stack Engineer" class="input-styled">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Or Paste Resume Text</label>
+                        <textarea id="resumeTextInput" class="input-styled" rows="3" placeholder="Paste your resume plain text here if not uploading a file..."></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Target Job Description (Optional — for Keyword Gap Match)</label>
+                        <textarea id="resumeJDInput" class="input-styled" rows="3" placeholder="Paste the job description to identify missing critical keywords and ATS match score..."></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="btn-new-chat" id="btnDoResumeAnalyze" style="margin: 0; padding: 10px 22px;" onclick="ResumeStudio.analyze()">🔍 Run ATS Analysis</button>
+                    </div>
+
+                    <div id="resumeAnalysisResult"></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Generator View -->
+            <div id="resumeGenerateView" style="display: none;">
+                <div class="settings-form-body">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 13.5px; color: var(--text-muted);">Fill in candidate details or load a sample profile:</span>
+                        <button class="msg-btn" onclick="ResumeStudio.fillSample()">📋 Load Sample Data</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                        <div class="form-field">
+                            <label>Full Name</label>
+                            <input type="text" id="genNameInput" placeholder="John Doe" class="input-styled">
+                        </div>
+                        <div class="form-field">
+                            <label>Email Address</label>
+                            <input type="email" id="genEmailInput" placeholder="john@example.com" class="input-styled">
+                        </div>
+                        <div class="form-field">
+                            <label>Phone Number</label>
+                            <input type="text" id="genPhoneInput" placeholder="+1 (555) 019-2834" class="input-styled">
+                        </div>
+                        <div class="form-field">
+                            <label>Location</label>
+                            <input type="text" id="genLocationInput" placeholder="San Francisco, CA" class="input-styled">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Target Job Role *</label>
+                        <input type="text" id="genRoleInput" placeholder="e.g. Senior Machine Learning & Full-Stack Engineer" class="input-styled">
+                    </div>
+
+                    <div class="form-field">
+                        <label>Key Skills & Technologies *</label>
+                        <textarea id="genSkillsInput" class="input-styled" rows="2" placeholder="e.g. Python, PyTorch, React, TypeScript, Docker, Kubernetes, AWS, PostgreSQL, REST APIs"></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Work Experience / Career Highlights</label>
+                        <textarea id="genExperienceInput" class="input-styled" rows="3" placeholder="List your roles, companies, dates, and what you worked on..."></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Education & Certifications</label>
+                        <textarea id="genEducationInput" class="input-styled" rows="2" placeholder="e.g. B.S. in Computer Science, University of California (2018-2022), AWS Certified Solutions Architect"></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Key Projects & Achievements</label>
+                        <textarea id="genProjectsInput" class="input-styled" rows="2" placeholder="e.g. Built an automated AI agent platform serving 1M users"></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="btn-new-chat" id="btnDoResumeGen" style="margin: 0; padding: 10px 24px;" onclick="ResumeStudio.generate()">✨ Generate ATS Resume (.docx)</button>
+                    </div>
+
+                    <div id="resumeGenResult"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+            <button class="msg-btn btn-secondary" onclick="closeModal('resumeModal')">Close</button>
+        </div>
+    </div>
+</div>
 
 <!-- AI Image Studio Modal -->
 <div class="modal-backdrop" id="imageGenModal">
@@ -401,6 +534,7 @@
 <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
 <script src="{{ url_for('static', filename='js/vision.js') }}"></script>
 <script src="{{ url_for('static', filename='js/documents.js') }}"></script>
+<script src="{{ url_for('static', filename='js/resume.js') }}"></script>
 <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 
