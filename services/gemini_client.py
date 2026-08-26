@@ -1,5 +1,6 @@
 import os
 import io
+import time
 import json
 import logging
 from PIL import Image
@@ -7,11 +8,20 @@ from config import DEFAULT_MODEL, AVAILABLE_MODELS
 
 logger = logging.getLogger(__name__)
 
+# Fallback sequence to recover from rate limits (429) across different model quotas
+FALLBACK_SEQUENCE = [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.7-flash",
+    "gemini-2.5-pro"
+]
+
+
+
 def clean_key(raw_key):
     """Sanitizes raw API key string to strict ASCII alphanumeric/symbol characters."""
     if not raw_key:
         return ""
-    # Strip any non-ASCII characters that might have been copied with the key
     cleaned = "".join(c for c in str(raw_key) if ord(c) < 128)
     return cleaned.strip().strip('"').strip("'").strip()
 
@@ -44,15 +54,24 @@ def parse_gemini_error(err_obj):
     """Extracts a clean, actionable error message from Gemini API exceptions."""
     err_str = str(err_obj) if err_obj else ""
     if "API_KEY_INVALID" in err_str or "API key not valid" in err_str or "400" in err_str or "INVALID_ARGUMENT" in err_str:
-        return "⚠️ **Invalid API Key**: The provided Gemini API Key was rejected by Google AI Studio. Please verify and re-enter your key in Settings (⚙️)."
+        return "⚠️ **Invalid API Key**: The provided Gemini API Key was rejected by Google AI Studio. Please verify and re-enter your key in **Settings (⚙️)**."
     elif "RESOURCE_EXHAUSTED" in err_str or "429" in err_str:
-        return "⚠️ **Rate Limit Exceeded**: Gemini API quota or rate limit reached. Please try again in a few moments."
+        return (
+            "⚠️ **Gemini Free-Tier Rate Limit Reached (429)**\n\n"
+            "Google AI Studio free tier limits requests to **15 per minute (RPM)** or **1,500 daily requests**.\n\n"
+            "**Quick solutions:**\n"
+            "1. ⏳ **Wait 30–60 seconds** for the rate limit window to reset.\n"
+            "2. ⚡ Switch model to **Gemini 3.5 Flash Lite** in the top header selector.\n"
+            "3. 🔑 Add a new/fresh API key in **Settings (⚙️)** from [Google AI Studio](https://aistudio.google.com/app/apikey)."
+        )
+    elif "503" in err_str or "Service Unavailable" in err_str:
+        return "⚠️ **Google AI Service Temporary Busy**: Google AI servers are temporarily experiencing high traffic. Please retry in a few seconds."
     elif "codec can't encode" in err_str or "UnicodeEncodeError" in err_str or "ascii" in err_str:
         return "⚠️ **Input Formatting Notice**: Non-standard characters or invalid key format detected. Please verify your query or API Key in Settings (⚙️)."
     elif "NOT_FOUND" in err_str or "404" in err_str:
         return "⚠️ **Model Not Found**: The requested Gemini model is currently unavailable."
     else:
-        return f"⚠️ **AI Service Notice**: {err_str[:150]}"
+        return f"⚠️ **AI Service Notice**: {err_str[:160]}"
 
 
 def generate_chat_response(
@@ -64,7 +83,7 @@ def generate_chat_response(
     temperature=0.7
 ):
     """
-    Generates non-streaming AI response with multimodal support.
+    Generates non-streaming AI response with multi-model automatic fallback on rate limits.
     """
     client, err = get_client(custom_api_key)
     if err:
@@ -74,56 +93,66 @@ def generate_chat_response(
             "error": True
         }
 
-    selected_model = model_name if model_name in AVAILABLE_MODELS else DEFAULT_MODEL
+    from google.genai import types
 
-    try:
-        from google.genai import types
+    # Prepare contents
+    contents = []
+    if images:
+        for img_path in images:
+            if os.path.exists(img_path):
+                try:
+                    with Image.open(img_path) as pil_img:
+                        contents.append(pil_img.copy())
+                except Exception as img_err:
+                    logger.warning("Could not load image: %s", img_err)
 
-        contents = []
+    for msg in messages:
+        text = msg.get("content") or msg.get("text", "")
+        if text:
+            contents.append(str(text))
 
-        if images:
-            for img_path in images:
-                if os.path.exists(img_path):
-                    try:
-                        with Image.open(img_path) as pil_img:
-                            contents.append(pil_img.copy())
-                    except Exception as img_err:
-                        logger.warning("Could not load image: %s", img_err)
+    config = types.GenerateContentConfig(
+        system_instruction=str(system_instruction) if system_instruction else None,
+        temperature=temperature
+    )
 
-        for msg in messages:
-            text = msg.get("content") or msg.get("text", "")
-            if text:
-                contents.append(str(text))
+    # Sequence of models to try
+    primary_model = model_name if model_name in AVAILABLE_MODELS else DEFAULT_MODEL
+    models_to_try = [primary_model] + [m for m in FALLBACK_SEQUENCE if m != primary_model]
 
-        config = types.GenerateContentConfig(
-            system_instruction=str(system_instruction) if system_instruction else None,
-            temperature=temperature
-        )
+    last_error = None
+    for model_candidate in models_to_try:
+        try:
+            response = client.models.generate_content(
+                model=model_candidate,
+                contents=contents,
+                config=config
+            )
+            return {
+                "text": response.text or "No response received.",
+                "model": model_candidate,
+                "error": False
+            }
+        except Exception as e:
+            err_str = str(e)
+            last_error = e
+            if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str or "503" in err_str:
+                logger.warning("Model %s returned rate limit / busy. Attempting fallback model...", model_candidate)
+                time.sleep(0.8)
+                continue
+            else:
+                # Other non-retryable error
+                return {
+                    "text": parse_gemini_error(e),
+                    "model": model_candidate,
+                    "error": True
+                }
 
-        response = client.models.generate_content(
-            model=selected_model,
-            contents=contents,
-            config=config
-        )
-
-        return {
-            "text": response.text or "No response received.",
-            "model": selected_model,
-            "error": False
-        }
-    except UnicodeEncodeError as ue:
-        return {
-            "text": "⚠️ **Encoding Notice**: Character encoding issue detected. Please check your API Key in Settings (⚙️).",
-            "model": selected_model,
-            "error": True
-        }
-    except Exception as e:
-        err_msg = parse_gemini_error(e)
-        return {
-            "text": err_msg,
-            "model": selected_model,
-            "error": True
-        }
+    return {
+        "text": parse_gemini_error(last_error),
+        "model": primary_model,
+        "error": True
+    }
 
 
 def stream_chat_response(
@@ -135,7 +164,7 @@ def stream_chat_response(
     temperature=0.7
 ):
     """
-    Generator yielding Server-Sent Events (SSE) data chunks for streaming AI responses.
+    Generator yielding Server-Sent Events (SSE) data chunks with multi-model rate-limit fallback.
     """
     client, err = get_client(custom_api_key)
     if err:
@@ -143,46 +172,66 @@ def stream_chat_response(
         yield f"data: {json.dumps({'chunk': error_msg, 'done': True, 'error': True})}\n\n"
         return
 
-    selected_model = model_name if model_name in AVAILABLE_MODELS else DEFAULT_MODEL
+    from google.genai import types
 
-    try:
-        from google.genai import types
+    contents = []
+    if images:
+        for img_path in images:
+            if os.path.exists(img_path):
+                try:
+                    with Image.open(img_path) as pil_img:
+                        contents.append(pil_img.copy())
+                except Exception as e:
+                    logger.warning("Could not open image for Gemini: %s", e)
 
-        contents = []
-        if images:
-            for img_path in images:
-                if os.path.exists(img_path):
-                    try:
-                        with Image.open(img_path) as pil_img:
-                            contents.append(pil_img.copy())
-                    except Exception as e:
-                        logger.warning("Could not open image for Gemini: %s", e)
+    for msg in messages:
+        text = msg.get("content") or msg.get("text", "")
+        if text:
+            contents.append(str(text))
 
-        for msg in messages:
-            text = msg.get("content") or msg.get("text", "")
-            if text:
-                contents.append(str(text))
+    config = types.GenerateContentConfig(
+        system_instruction=str(system_instruction) if system_instruction else None,
+        temperature=temperature
+    )
 
-        config = types.GenerateContentConfig(
-            system_instruction=str(system_instruction) if system_instruction else None,
-            temperature=temperature
-        )
+    primary_model = model_name if model_name in AVAILABLE_MODELS else DEFAULT_MODEL
+    models_to_try = [primary_model] + [m for m in FALLBACK_SEQUENCE if m != primary_model]
 
-        response_stream = client.models.generate_content_stream(
-            model=selected_model,
-            contents=contents,
-            config=config
-        )
+    streamed_successfully = False
+    last_error = None
 
-        for chunk in response_stream:
-            if chunk.text:
-                yield f"data: {json.dumps({'chunk': chunk.text, 'done': False})}\n\n"
+    for model_candidate in models_to_try:
+        try:
+            response_stream = client.models.generate_content_stream(
+                model=model_candidate,
+                contents=contents,
+                config=config
+            )
 
-        yield f"data: {json.dumps({'chunk': '', 'done': True, 'model': selected_model})}\n\n"
+            has_chunks = False
+            for chunk in response_stream:
+                if chunk.text:
+                    has_chunks = True
+                    yield f"data: {json.dumps({'chunk': chunk.text, 'done': False})}\n\n"
 
-    except UnicodeEncodeError:
-        err_msg = "\n\n⚠️ **Encoding Notice**: Character encoding issue detected. Please check your API Key in Settings (⚙️)."
-        yield f"data: {json.dumps({'chunk': err_msg, 'done': True, 'error': True})}\n\n"
-    except Exception as e:
-        err_msg = f"\n\n{parse_gemini_error(e)}"
+            if has_chunks:
+                yield f"data: {json.dumps({'chunk': '', 'done': True, 'model': model_candidate})}\n\n"
+                streamed_successfully = True
+                break
+
+        except Exception as e:
+            err_str = str(e)
+            last_error = e
+            if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str or "503" in err_str:
+                logger.warning("Streaming for %s hit quota/rate limit. Attempting fallback model...", model_candidate)
+                time.sleep(0.8)
+                continue
+            else:
+                err_msg = f"\n\n{parse_gemini_error(e)}"
+                yield f"data: {json.dumps({'chunk': err_msg, 'done': True, 'error': True})}\n\n"
+                streamed_successfully = True
+                break
+
+    if not streamed_successfully:
+        err_msg = f"\n\n{parse_gemini_error(last_error)}"
         yield f"data: {json.dumps({'chunk': err_msg, 'done': True, 'error': True})}\n\n"
