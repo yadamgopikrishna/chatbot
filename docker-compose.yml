@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  og-ai:
+    build: .
+    container_name: og_multimodal_ai
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_TYPE=sqlite
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-og-secret-key-2026-multimodal}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./instance:/app/instance
