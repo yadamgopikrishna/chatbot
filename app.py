@@ -1,76 +1,95 @@
-from gemini import get_ai_response
-from flask import Flask, render_template, request,redirect,session,jsonify
-from db import get_connection
+import sys
+import os
+
+# Ensure UTF-8 console output and error handling on Windows
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
+import logging
+from flask import Flask, render_template, session, redirect, send_from_directory, jsonify
+from config import SECRET_KEY, UPLOAD_FOLDER, MAX_CONTENT_LENGTH
+from models import init_db
+
+# Configure logging with safe stream handler
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
-app.secret_key = ""
-@app.route("/")
-def home():
-    return render_template("login.html")
-@app.route("/register")
-def register_page():
-    return render_template("register.html")
-@app.route("/login", methods=["POST"])
-def login():
-    
-    email = request.form["email"]
-    password = request.form["password"]
-    connection=get_connection()
-    cursor = connection.cursor()
-    sql = """select * from users where email=:1 and password=:2"""
-    cursor.execute(sql, (email, password))
-    user = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    if user:
-        session["email"] = user[2]
-        session["name"] = user[1]
-        return redirect("/dashboard")
-    else:
-        return "Invalid email or password"
-    
+app.secret_key = SECRET_KEY
+app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-@app.route("/register", methods=["POST"])
-def register():
-    print(request.form)
-    name = request.form["name"]
-    email = request.form["email"]
-    password = request.form["password"]
-    print(name,email,password)
-    connection=get_connection()
-    cursor = connection.cursor()
-    sql = """insert into users(name,email,password,created_date) values(:1,:2,:3,sysdate)"""
-    print(name,email,password)
-    cursor.execute(sql, (name, email, password))
-    print("insert executed")
-    connection.commit()
-    print("commit executed")
-    cursor.close()
-    connection.close()
-    session["email"] = email
-    session["name"] = name
+# Initialize database tables
+try:
+    init_db()
+    logger.info("Database successfully initialized.")
+except Exception as e:
+    logger.warning("Database init notice: %s", e)
 
-    return redirect("/dashboard")
+# Import & Register Blueprints
+from routes.auth_routes import auth_bp
+from routes.chat_routes import chat_bp
+from routes.document_routes import document_bp
+from routes.image_routes import image_bp
+from routes.spreadsheet_routes import spreadsheet_bp
+from routes.settings_routes import settings_bp
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(chat_bp)
+app.register_blueprint(document_bp)
+app.register_blueprint(image_bp)
+app.register_blueprint(spreadsheet_bp)
+app.register_blueprint(settings_bp)
+
+
 @app.route("/dashboard")
 def dashboard():
-
+    """Main dashboard page."""
     if "email" not in session:
-
         return redirect("/")
+    return render_template(
+        "dashboard.html",
+        name=session.get("name", "User"),
+        email=session.get("email", ""),
+        preferred_lang=session.get("preferred_lang", "auto"),
+        theme=session.get("theme", "dark")
+    )
 
-    return render_template("dashboard.html",name=session["name"])
-@app.route("/chat", methods=["POST"])
-def chat():
 
-    data = request.get_json()
-    print(data)
-    message = data["message"]
-    print(message)
+@app.route("/uploads/<path:filename>")
+def uploaded_file(filename):
+    """Secure static file server for uploaded documents and images."""
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-    ai_response = get_ai_response(message)
 
-    print(ai_response)
-    return jsonify({
-        "response": ai_response
-    })
+# Error Handlers
+@app.errorhandler(404)
+def not_found_error(e):
+    return jsonify({"error": "Resource not found"}), 404
+
+
+@app.errorhandler(413)
+def file_too_large(e):
+    return jsonify({"error": "File size exceeds the 30MB maximum limit."}), 413
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    logger.error("Internal Server Error: %s", e)
+    return jsonify({"error": "An internal server error occurred."}), 500
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="127.0.0.1", port=5000)

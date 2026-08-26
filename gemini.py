@@ -1,14 +1,7 @@
-import google.generativeai as genai
+"""
+Backward compatibility layer for gemini.py
+Routes to the centralized AIService in services/ai_service.py
+"""
+from services.ai_service import get_ai_response, process_user_query
 
-genai.configure(
-    api_key="gemini_api_key"
-)
-
-model = genai.GenerativeModel(
-    "gemini-2.5-flash"
-)
-def get_ai_response(message):
-
-    response = model.generate_content(message)
-
-    return response.text
+__all__ = ["get_ai_response", "process_user_query"]

@@ -1,51 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="dark">
 <head>
-
     <meta charset="UTF-8">
-
-    <title>Customer Support Login</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - OG AI Studio</title>
+    
+    <!-- Google Fonts: Poppins + Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-
 </head>
-
 <body>
 
-    <div class="login-box">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">✨</div>
+            <h1>Welcome Back</h1>
+            <p>Sign in to OG Multimodal AI Assistant</p>
+        </div>
 
-        <h1>Customer Support Chatbot</h1>
+        {% if error %}
+        <div class="auth-error-banner">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
 
-        <form method="POST" action="/login">
+        <form method="POST" action="/login" class="auth-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="name@example.com" required autofocus>
+            </div>
 
-    <label>Email</label>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
 
-    <input
-        type="email"
-        name="email"
-        placeholder="Enter your email"
-        required>
+            <button type="submit" class="btn-auth-submit">Sign In to OG Workspace</button>
+        </form>
 
-    <label>Password</label>
-
-    <input
-        type="password"
-        name="password"
-        placeholder="Enter password"
-        required>
-
-    <button type="submit">
-        Login
-
-    </button>
-    <p>Don't have an account? <a href="/register">Register here</a>
-    </p>
-
-</form>
-
+        <div class="auth-footer">
+            Don't have an account? <a href="/register">Create an account here</a>
+        </div>
     </div>
 
 </body>
-
 </html>

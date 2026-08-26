@@ -1,77 +1,408 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en" data-theme="{{ theme or 'dark' }}">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OG AI Studio</title>
+    
+    <!-- Google Fonts: Poppins + Inter + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for Data Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <title>Dashboard</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/dashboard.css') }}">
-
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/markdown.css') }}">
 </head>
-
 <body>
-    <img src="{{ url_for('static', filename='images/logo.png') }}" width="80">
 
-    <h1>Customer Support Chatbot</h1>
+<div class="app-container">
+    
+    <!-- ====================================================================
+         Sidebar (Clean, Modern, Uncluttered)
+         ==================================================================== -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </div>
+                <span class="brand-text">OG <span class="brand-badge">AI</span></span>
+            </div>
+            <button class="icon-btn mobile-toggle" onclick="toggleMobileSidebar()" title="Close Sidebar">✕</button>
+        </div>
 
-    <hr>
-
-    <h2>Welcome {{ name }}</h2>
-
-    <hr>
-
-    <h3>Previous Chats</h3>
-
-    <p>No Chats Available</p>
-
-    <hr>
-
-    <h3>AI Chat</h3>
-
-    <textarea id="chatBox" rows="15" cols="80" readonly>
-</textarea>
-    <br><br>
-    <form onsubmit="return false;">
-        <input type="text" id="message" name="message" placeholder="Type your message" size="70">
-
-
-        <button type="submit" style="cursor:pointer;" onclick="sendMessage()">
-
-            Send
-
+        <button class="btn-new-chat" onclick="startNewChat()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Conversation</span>
         </button>
 
-    </form>
-    <script>
-        async function sendMessage() {
+        <div class="search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchChatsInput" placeholder="Search chats..." oninput="filterConversations(this.value)">
+        </div>
 
-            let message = document.getElementById("message").value;
+        <div class="conversations-nav" id="conversationsList">
+            <div class="nav-section-title">Recent Chats</div>
+            <!-- Dynamically populated via chat.js -->
+        </div>
 
-            document.getElementById("chatBox").value +=
-                "You : " + message + "\n";
+        <div class="sidebar-footer">
+            <button class="footer-nav-btn" onclick="openModal('imageGenModal');">
+                <span class="footer-btn-icon">🎨</span>
+                <span class="footer-btn-text">AI Image Studio</span>
+                <span class="footer-btn-badge">NEW</span>
+            </button>
+            <button class="footer-nav-btn" onclick="openModal('docLibraryModal'); DocumentManager.loadLibrary();">
+                <span class="footer-btn-icon">📁</span>
+                <span class="footer-btn-text">Document Library</span>
+                <span class="footer-btn-badge">RAG</span>
+            </button>
+            <button class="footer-nav-btn" onclick="openModal('settingsModal'); SettingsManager.loadSettings();">
+                <span class="footer-btn-icon">⚙️</span>
+                <span class="footer-btn-text">Settings & Key</span>
+            </button>
+            
+            <div class="user-profile">
+                <div class="user-info">
+                    <div class="user-avatar">{{ (name or 'U')[0] | upper }}</div>
+                    <div class="user-details">
+                        <div class="user-name">{{ name or 'User' }}</div>
+                        <div class="user-email">{{ email }}</div>
+                    </div>
+                </div>
+                <a href="/logout" class="btn-logout" title="Sign Out">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </aside>
 
-            document.getElementById("message").value = "";
+    <!-- ====================================================================
+         Main Chat Workspace
+         ==================================================================== -->
+    <main class="main-chat">
+        
+        <!-- Sleek Header -->
+        <header class="chat-header">
+            <div class="header-left">
+                <button class="icon-btn mobile-toggle" onclick="toggleMobileSidebar()">☰</button>
+                <div class="active-conv-indicator"></div>
+                <div class="active-conv-title" id="activeConvTitle">OG AI Workspace</div>
+            </div>
 
-            let response = await fetch("/chat", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    message: message
-                })
-            });
+            <div class="header-controls">
+                <!-- Model Switcher -->
+                <div class="control-pill-wrapper">
+                    <select class="select-pill" id="modelSelect" title="Select AI Model">
+                        <option value="gemini-2.5-flash" selected>⚡ Gemini 2.5 Flash</option>
+                        <option value="gemini-3.7-flash">🚀 Gemini 3.7 Flash</option>
+                        <option value="gemini-2.5-pro">🧠 Gemini 2.5 Pro</option>
+                        <option value="gemini-3.5-flash-lite">💨 Gemini 3.5 Lite</option>
+                    </select>
+                </div>
 
-            let data = await response.json();
+                <!-- Language Selector -->
+                <div class="control-pill-wrapper">
+                    <select class="select-pill" id="langSelect" title="Select Language Preference">
+                        <option value="auto">🌐 Auto-Detect</option>
+                        <option value="en">English</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="es">Español (Spanish)</option>
+                        <option value="fr">Français (French)</option>
+                        <option value="de">Deutsch (German)</option>
+                    </select>
+                </div>
 
-            document.getElementById("chatBox").value +=
-                "AI : " + data.response + "\n\n";
+                <!-- Theme Toggle Button -->
+                <button class="icon-btn theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                    🌙
+                </button>
+            </div>
+        </header>
 
-            document.getElementById("chatBox").scrollTop =
-                document.getElementById("chatBox").scrollHeight;
-        }
-    </script>
+        <!-- Messages Container -->
+        <div class="messages-container" id="messagesContainer">
+            
+            <!-- Clean Hero Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
+                
+                <div class="hero-badge">
+                    <span class="pulse-dot"></span>
+                    <span>OG Multimodal Intelligence</span>
+                </div>
 
+                <h1 class="welcome-title">How can OG assist you today?</h1>
+                
+                <p class="welcome-subtitle">
+                    Analyze documents, generate artwork, explore spreadsheets, inspect images, and communicate seamlessly across multiple languages.
+                </p>
+
+                <!-- Clean Prompts Grid -->
+                <div class="quick-prompts-grid">
+                    <div class="quick-prompt-card" onclick="setPrompt('Generate an image of a futuristic neon city in cyberpunk style')">
+                        <div class="card-icon-bubble">🎨</div>
+                        <div class="card-text-content">
+                            <div class="quick-prompt-title">AI Image Generation</div>
+                            <div class="quick-prompt-desc">Create artwork, illustrations & visuals from text prompts</div>
+                        </div>
+                    </div>
+
+                    <div class="quick-prompt-card" onclick="setPrompt('Analyze and summarize the main points of this document with page citations.')">
+                        <div class="card-icon-bubble">📄</div>
+                        <div class="card-text-content">
+                            <div class="quick-prompt-title">Document Q&A</div>
+                            <div class="quick-prompt-desc">Extract insights, tables, and verifiable source citations</div>
+                        </div>
+                    </div>
+
+                    <div class="quick-prompt-card" onclick="setPrompt('Inspect this spreadsheet, calculate summary metrics, detect trends, and suggest charts.')">
+                        <div class="card-icon-bubble">📊</div>
+                        <div class="card-text-content">
+                            <div class="quick-prompt-title">Spreadsheet Analytics</div>
+                            <div class="quick-prompt-desc">Auto-generate interactive Chart.js charts & stats</div>
+                        </div>
+                    </div>
+
+                    <div class="quick-prompt-card" onclick="setPrompt('ఈ పత్రంలోని ముఖ్యమైన విషయాలను తెలుగులో సులభంగా వివరించండి.')">
+                        <div class="card-icon-bubble">🌐</div>
+                        <div class="card-text-content">
+                            <div class="quick-prompt-title">Multilingual Assistance</div>
+                            <div class="quick-prompt-desc">Ask in Telugu, Hindi, or any language with native fluently translated responses</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Clean Composer Dock -->
+        <div class="composer-container">
+            
+            <!-- Drag and drop zone -->
+            <div class="dropzone-overlay" id="dropzoneOverlay">
+                <div class="dropzone-box">
+                    <div class="dropzone-icon">📥</div>
+                    <div class="dropzone-text">Drop PDFs, DOCX, Spreadsheets, or Images to Attach</div>
+                </div>
+            </div>
+
+            <!-- Attachment preview strip -->
+            <div class="attachment-preview-strip" id="attachmentStrip" style="display: none;"></div>
+
+            <!-- Composer Box -->
+            <div class="composer-box">
+                <!-- Hidden file input -->
+                <input type="file" id="fileUploadInput" multiple accept=".pdf,.docx,.doc,.txt,.rtf,.md,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp" style="display: none;">
+                
+                <button class="composer-tool-btn" onclick="document.getElementById('fileUploadInput').click()" title="Attach Document, Sheet, or Image">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                    </svg>
+                </button>
+
+                <button class="composer-tool-btn" onclick="openModal('imageGenModal')" title="Generate AI Image">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </button>
+
+                <textarea id="chatInput" class="composer-textarea" rows="1" placeholder="Ask OG anything, attach files, or generate images (e.g. 'draw a cute cat')..."></textarea>
+
+                <div class="composer-tools">
+                    <button class="composer-tool-btn" id="micBtn" title="Voice Input">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+                    <button class="btn-send" id="sendBtn" title="Send message">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="composer-disclaimer">
+                OG Multimodal Assistant • Real-time AI Vision, Documents & Image Generation
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+<!-- ========================================================================
+     Modals
+     ======================================================================== -->
+
+<!-- AI Image Studio Modal -->
+<div class="modal-backdrop" id="imageGenModal">
+    <div class="modal-window" style="max-width: 600px;">
+        <div class="modal-header">
+            <div class="modal-header-title">
+                <span class="modal-icon">🎨</span>
+                <h3>OG AI Image Studio</h3>
+            </div>
+            <button class="icon-btn" onclick="closeModal('imageGenModal')">✕</button>
+        </div>
+        <div class="modal-body settings-form-body">
+            <div class="form-field">
+                <label>Prompt Description</label>
+                <textarea id="imgGenPromptInput" class="input-styled" rows="3" placeholder="Describe the image you want to create in detail... (e.g. A serene Japanese garden with blooming cherry blossoms at sunset, cinematic lighting)"></textarea>
+            </div>
+            <div class="form-field">
+                <label>Aspect Ratio</label>
+                <select id="imgGenRatioSelect" class="select-pill" style="width: 100%; border-radius: 10px;">
+                    <option value="1:1" selected>Square (1:1)</option>
+                    <option value="16:9">Landscape (16:9)</option>
+                    <option value="9:16">Portrait (9:16)</option>
+                    <option value="4:3">Standard (4:3)</option>
+                    <option value="3:4">Vertical (3:4)</option>
+                </select>
+            </div>
+            <div id="imgGenResult"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="msg-btn btn-secondary" onclick="closeModal('imageGenModal')">Close</button>
+            <button class="btn-new-chat" id="btnDoImgGen" style="margin: 0; padding: 10px 22px;" onclick="ImageStudio.generate()">✨ Generate Artwork</button>
+        </div>
+    </div>
+</div>
+
+<!-- Document Library Modal -->
+<div class="modal-backdrop" id="docLibraryModal">
+    <div class="modal-window" style="max-width: 820px;">
+        <div class="modal-header">
+            <div class="modal-header-title">
+                <span class="modal-icon">📚</span>
+                <h3>Document Library</h3>
+            </div>
+            <button class="icon-btn" onclick="closeModal('docLibraryModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-toolbar">
+                <span class="modal-desc">Manage, analyze, and compare uploaded documents</span>
+                <button class="msg-btn btn-compare" id="btnStartCompare" disabled onclick="DocumentManager.runComparison()">
+                    ⚖️ Compare Selected (2)
+                </button>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Select</th>
+                        <th>Filename</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="docsTableBody">
+                    <!-- Populated via documents.js -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Document Comparison Modal -->
+<div class="modal-backdrop" id="compareModal">
+    <div class="modal-window" style="max-width: 860px;">
+        <div class="modal-header">
+            <div class="modal-header-title">
+                <span class="modal-icon">⚖️</span>
+                <h3>Document Comparison</h3>
+            </div>
+            <button class="icon-btn" onclick="closeModal('compareModal')">✕</button>
+        </div>
+        <div class="modal-body" id="compareContent">
+            <!-- Populated via documents.js -->
+        </div>
+    </div>
+</div>
+
+<!-- Image Forensics Modal -->
+<div class="modal-backdrop" id="forensicsModal">
+    <div class="modal-window" style="max-width: 620px;">
+        <div class="modal-header">
+            <div class="modal-header-title">
+                <span class="modal-icon">🔍</span>
+                <h3>Image Authenticity Report</h3>
+            </div>
+            <button class="icon-btn" onclick="closeModal('forensicsModal')">✕</button>
+        </div>
+        <div class="modal-body" id="forensicsModalContent">
+            <!-- Populated via vision.js -->
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-backdrop" id="settingsModal">
+    <div class="modal-window" style="max-width: 540px;">
+        <div class="modal-header">
+            <div class="modal-header-title">
+                <span class="modal-icon">⚙️</span>
+                <h3>Settings & API Key</h3>
+            </div>
+            <button class="icon-btn" onclick="closeModal('settingsModal')">✕</button>
+        </div>
+        <div class="modal-body settings-form-body">
+            <div class="form-field">
+                <label>Preferred Language</label>
+                <select id="settingsLangSelect" class="select-pill" style="width: 100%; border-radius: 10px;"></select>
+            </div>
+            <div class="form-field">
+                <label>Default AI Model</label>
+                <select id="settingsModelSelect" class="select-pill" style="width: 100%; border-radius: 10px;"></select>
+            </div>
+            <div class="form-field">
+                <label>Google Gemini API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="Enter GEMINI_API_KEY" class="input-styled">
+                <div id="apiKeyStatus" class="key-status-box"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="msg-btn btn-secondary" onclick="closeModal('settingsModal')">Cancel</button>
+            <button class="btn-new-chat" style="margin: 0; padding: 10px 22px;" onclick="SettingsManager.saveSettings()">Save Settings</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Scripts -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vision.js') }}"></script>
+<script src="{{ url_for('static', filename='js/documents.js') }}"></script>
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 
 </body>
-
 </html>

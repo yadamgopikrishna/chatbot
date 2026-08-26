@@ -1,44 +1,56 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en" data-theme="dark">
 <head>
-
-    <title>Register</title>
-
-    <link rel="stylesheet" href="{{ url_for('static',filename='css/register.css') }}">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - OG AI Studio</title>
+    
+    <!-- Google Fonts: Poppins + Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
-
 <body>
 
-    <div class="register-box">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">✨</div>
+            <h1>Create Account</h1>
+            <p>Get started with OG Multimodal Intelligence</p>
+        </div>
 
-        <h1>Create Account</h1>
+        {% if error %}
+        <div class="auth-error-banner">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
 
-        <form action="/register" method="POST">
+        <form method="POST" action="/register" class="auth-form">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" placeholder="John Doe" required autofocus>
+            </div>
 
-            <input type="text" name="name" placeholder="Full Name" required>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="name@example.com" required>
+            </div>
 
-            <input type="email" name="email" placeholder="Email" required>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a secure password" required minlength="4">
+            </div>
 
-            <input type="password" name="password" placeholder="Password" required>
-
-            <button>Create Account</button>
-
+            <button type="submit" class="btn-auth-submit">Create Free OG Account</button>
         </form>
 
-        <br>
-
-        <p>
-
-            Already have an account?
-
-            <a href="/">Login</a>
-
-        </p>
-
+        <div class="auth-footer">
+            Already have an account? <a href="/">Sign in here</a>
+        </div>
     </div>
 
 </body>
-
 </html>

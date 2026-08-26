@@ -1,5 +1,35 @@
-instantclient_19_31/
+# Virtual Environment
 venv/
 .venv/
+env/
+
+# Environment Variables & Secrets
+.env
+.env.local
+*.env
+
+# Python Cache
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# Oracle Client
+instantclient_*/
+instantclient_19_31/
+
+# Uploaded User Files (keep folder, ignore contents)
+uploads/*
+!uploads/.gitkeep
+
+# Databases & Backups
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
