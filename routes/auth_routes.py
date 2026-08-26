@@ -39,10 +39,13 @@ def login():
         session["name"] = user["name"]
         session["preferred_lang"] = user.get("preferred_lang", "auto")
         session["theme"] = user.get("theme", "dark")
+        if user.get("api_key"):
+            session["gemini_api_key"] = user["api_key"]
 
         if request.is_json:
             return jsonify({"success": True, "redirect": "/dashboard", "user": {"name": user["name"], "email": user["email"]}})
         return redirect("/dashboard")
+
     else:
         if request.is_json:
             return jsonify({"success": False, "error": "Invalid email or password"}), 401

@@ -2,6 +2,29 @@
  * Multimodal AI Assistant - Core App State & UI Manager
  */
 
+// Universal Fetch Interceptor for ngrok & mobile proxy support
+(function() {
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        options = options || {};
+        options.headers = options.headers || {};
+        
+        if (options.headers instanceof Headers) {
+            options.headers.set('ngrok-skip-browser-warning', 'true');
+        } else if (Array.isArray(options.headers)) {
+            options.headers.push(['ngrok-skip-browser-warning', 'true']);
+        } else {
+            options.headers['ngrok-skip-browser-warning'] = 'true';
+        }
+        
+        if (!options.credentials) {
+            options.credentials = 'same-origin';
+        }
+        
+        return originalFetch.call(this, url, options);
+    };
+})();
+
 const AppState = {
     currentConversationId: null,
     currentModel: 'gemini-2.5-flash',
@@ -11,6 +34,7 @@ const AppState = {
     isGenerating: false,
     abortController: null
 };
+
 
 // Toast Notifications
 function showToast(message, type = 'info') {

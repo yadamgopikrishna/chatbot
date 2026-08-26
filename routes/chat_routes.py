@@ -3,6 +3,7 @@ import logging
 from flask import Blueprint, request, jsonify, session, Response, stream_with_context
 from config import get_current_api_key
 from models import (
+    get_user_by_email,
     get_user_conversations,
     create_conversation,
     update_conversation,
@@ -27,8 +28,15 @@ def legacy_chat():
         return jsonify({"response": "Please provide a valid message."})
 
     user_email = session.get("email")
+    user_record = get_user_by_email(user_email) if user_email else None
     conv_id = data.get("conversation_id")
-    custom_api_key = (data.get("api_key") or session.get("gemini_api_key") or get_current_api_key() or "").strip()
+    custom_api_key = (
+        data.get("api_key")
+        or session.get("gemini_api_key")
+        or (user_record.get("api_key") if user_record else "")
+        or get_current_api_key()
+        or ""
+    ).strip()
 
     # If in session and no conversation, create or use one
     if user_email and not conv_id:
@@ -74,9 +82,18 @@ def stream_chat():
     conv_id = data.get("conversation_id")
     attachments = data.get("attachments", [])
     model_name = data.get("model")
-    custom_api_key = (data.get("api_key") or session.get("gemini_api_key") or get_current_api_key() or "").strip()
 
     user_email = session.get("email", "guest@chatbot.local")
+    user_record = get_user_by_email(user_email) if user_email and user_email != "guest@chatbot.local" else None
+    
+    custom_api_key = (
+        data.get("api_key")
+        or session.get("gemini_api_key")
+        or (user_record.get("api_key") if user_record else "")
+        or get_current_api_key()
+        or ""
+    ).strip()
+
 
     if not message and not attachments:
         return jsonify({"error": "Message or attachment is required"}), 400

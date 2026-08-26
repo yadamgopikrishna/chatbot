@@ -68,6 +68,13 @@ def _init_oracle_tables(cursor, conn):
                 conn.commit()
             except Exception:
                 pass
+        if "API_KEY" not in existing_cols:
+            try:
+                cursor.execute("ALTER TABLE users ADD api_key VARCHAR2(255)")
+                conn.commit()
+            except Exception:
+                pass
+
 
     # 2. CONVERSATIONS table
     if "CONVERSATIONS" not in existing_tables:
@@ -164,9 +171,19 @@ def _init_sqlite_tables(cursor, conn):
             password TEXT NOT NULL,
             created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             preferred_lang TEXT DEFAULT 'auto',
-            theme TEXT DEFAULT 'dark'
+            theme TEXT DEFAULT 'dark',
+            api_key TEXT
         )
     """)
+    # Check if api_key column exists in SQLite users table
+    cursor.execute("PRAGMA table_info(users)")
+    sqlite_cols = {row[1].lower() for row in cursor.fetchall()}
+    if "api_key" not in sqlite_cols:
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN api_key TEXT")
+        except Exception:
+            pass
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS conversations (
             conversation_id TEXT PRIMARY KEY,
@@ -246,12 +263,15 @@ def get_user_by_email(email):
             
             has_lang = "PREFERRED_LANG" in cols
             has_theme = "THEME" in cols
+            has_api_key = "API_KEY" in cols
             
             query = "SELECT user_id, name, email, password, created_date"
             if has_lang:
                 query += ", preferred_lang"
             if has_theme:
                 query += ", theme"
+            if has_api_key:
+                query += ", api_key"
             query += " FROM users WHERE email = :1"
             
             cursor.execute(query, (email,))
@@ -264,7 +284,8 @@ def get_user_by_email(email):
                     "password": row[3],
                     "created_date": str(row[4]),
                     "preferred_lang": "auto",
-                    "theme": "dark"
+                    "theme": "dark",
+                    "api_key": ""
                 }
                 idx = 5
                 if has_lang and len(row) > idx:
@@ -272,16 +293,39 @@ def get_user_by_email(email):
                     idx += 1
                 if has_theme and len(row) > idx:
                     user_dict["theme"] = row[idx] or "dark"
+                    idx += 1
+                if has_api_key and len(row) > idx:
+                    user_dict["api_key"] = row[idx] or ""
                 return user_dict
         else:
             cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
             row = cursor.fetchone()
             if row:
-                return dict(row)
+                d = dict(row)
+                d.setdefault("api_key", "")
+                return d
         return None
     finally:
         cursor.close()
         conn.close()
+
+
+def update_user_api_key(email, api_key):
+    """Saves user API key to their database profile."""
+    conn = get_connection()
+    is_ora = is_oracle()
+    cursor = conn.cursor()
+    try:
+        if is_ora:
+            cursor.execute("UPDATE users SET api_key = :1 WHERE email = :2", (safe_str(api_key), safe_str(email)))
+        else:
+            cursor.execute("UPDATE users SET api_key = ? WHERE email = ?", (api_key, email))
+        conn.commit()
+        return True
+    finally:
+        cursor.close()
+        conn.close()
+
 
 
 def create_user(name, email, password):

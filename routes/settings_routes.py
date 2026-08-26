@@ -7,7 +7,7 @@ from config import (
     get_current_api_key,
     save_api_key_to_env
 )
-from models import get_user_by_email
+from models import get_user_by_email, update_user_api_key
 from db import db_cursor, is_oracle
 
 settings_bp = Blueprint("settings", __name__)
@@ -50,6 +50,12 @@ def settings():
             clean = api_key.strip().strip('"').strip("'")
             session["gemini_api_key"] = clean
             save_api_key_to_env(clean)
+            if user_email:
+                try:
+                    update_user_api_key(user_email, clean)
+                except Exception:
+                    pass
+
 
         # Update DB if user logged in
         if user_email:

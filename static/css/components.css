@@ -1044,20 +1044,55 @@
         left: 0;
         top: 0;
         transform: translateX(-100%);
+        z-index: 1000;
+        width: 82%;
+        max-width: 320px;
+        height: 100vh;
     }
     
     .sidebar.open {
         transform: translateX(0);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.85);
     }
     
     .mobile-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .welcome-title {
-        font-size: 26px;
+        font-size: 22px;
+    }
+
+    .modal-window {
+        width: 94vw !important;
+        max-height: 90vh !important;
+        margin: 10px auto;
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .modal-header {
+        padding: 16px 18px;
+    }
+
+    .composer-box {
+        padding: 8px 10px;
+    }
+
+    .composer-textarea {
+        font-size: 15px;
+    }
+
+    .message-bubble {
+        padding: 14px 16px;
+        font-size: 14.5px;
     }
 }
+
 
 /* --------------------------------------------------------------------------
    Resume Studio & ATS Analyzer

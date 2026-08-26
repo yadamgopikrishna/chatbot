@@ -26,10 +26,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from flask_cors import CORS
+
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = False
+
+# Enable CORS for local & ngrok tunnels
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
+
+@app.after_request
+def add_ngrok_headers(response):
+    response.headers["ngrok-skip-browser-warning"] = "true"
+    return response
 
 # Initialize database tables
 try:
@@ -37,6 +49,7 @@ try:
     logger.info("Database successfully initialized.")
 except Exception as e:
     logger.warning("Database init notice: %s", e)
+
 
 # Import & Register Blueprints
 from routes.auth_routes import auth_bp
