@@ -515,16 +515,77 @@
             </div>
             <div class="form-field">
                 <label>Google Gemini API Key</label>
-                <input type="password" id="apiKeyInput" placeholder="Enter GEMINI_API_KEY" class="input-styled">
+                <div class="password-input-wrapper">
+                    <input type="password" id="apiKeyInput" placeholder="Enter GEMINI_API_KEY" class="input-styled">
+                    <button type="button" class="password-toggle-btn" onclick="togglePassword('apiKeyInput', 'eyeKey')" title="Toggle API Key visibility">
+                        <svg id="eyeKey" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
                 <div id="apiKeyStatus" class="key-status-box"></div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 6px 0;">
+
+            <!-- Change Password Section -->
+            <div style="font-family: var(--font-display); font-weight: 800; font-size: 14.5px; color: var(--text-primary);">
+                🔒 Change Account Password
+            </div>
+
+            <div class="form-field">
+                <label>Current Password</label>
+                <div class="password-input-wrapper">
+                    <input type="password" id="currentPasswordInput" placeholder="Enter your current password" class="input-styled">
+                    <button type="button" class="password-toggle-btn" onclick="togglePassword('currentPasswordInput', 'eyeCurPass')" title="Toggle visibility">
+                        <svg id="eyeCurPass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-field">
+                    <label>New Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="newPasswordInput" placeholder="Min 4 characters" class="input-styled">
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword('newPasswordInput', 'eyeNewPass')" title="Toggle visibility">
+                            <svg id="eyeNewPass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>Confirm Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirmNewPasswordInput" placeholder="Confirm password" class="input-styled">
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword('confirmNewPasswordInput', 'eyeConfPass')" title="Toggle visibility">
+                            <svg id="eyeConfPass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div id="changePassStatus" style="font-size: 13px;"></div>
+                <button type="button" class="msg-btn btn-secondary" onclick="SettingsManager.changePassword()">Update Password</button>
             </div>
         </div>
         <div class="modal-footer">
             <button class="msg-btn btn-secondary" onclick="closeModal('settingsModal')">Cancel</button>
-            <button class="btn-new-chat" style="margin: 0; padding: 10px 22px;" onclick="SettingsManager.saveSettings()">Save Settings</button>
+            <button class="btn-new-chat" style="margin: 0; padding: 10px 22px;" onclick="SettingsManager.saveSettings()">Save Preferences</button>
         </div>
     </div>
 </div>
+
 
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>

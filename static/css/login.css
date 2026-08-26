@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AURA AI Studio - Ultra-Clear Auth Styling (Login / Register)
+   OG AI Studio - Ultra-Clear Auth Styling (Login / Register / Reset)
    ========================================================================== */
 
 body {
@@ -19,9 +19,9 @@ body {
     background: #110826;
     border: 2px solid #ec4899;
     border-radius: var(--radius-lg);
-    padding: 48px 44px;
+    padding: 44px 40px;
     width: 100%;
-    max-width: 450px;
+    max-width: 460px;
     box-shadow: 0 30px 70px rgba(0, 0, 0, 0.95), 0 0 45px rgba(236, 72, 153, 0.35);
     animation: authCardIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -33,26 +33,26 @@ body {
 
 .auth-header {
     text-align: center;
-    margin-bottom: 34px;
+    margin-bottom: 30px;
 }
 
 .auth-logo {
-    width: 58px;
-    height: 58px;
+    width: 56px;
+    height: 56px;
     background: var(--accent-gradient);
     border-radius: var(--radius-md);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
-    margin-bottom: 18px;
+    font-size: 28px;
+    margin-bottom: 16px;
     box-shadow: 0 0 24px rgba(236, 72, 153, 0.7);
     border: 1.5px solid rgba(255, 255, 255, 0.4);
 }
 
 .auth-header h1 {
     font-family: var(--font-display);
-    font-size: 30px;
+    font-size: 28px;
     font-weight: 900;
     color: #ffffff;
     margin-bottom: 8px;
@@ -60,7 +60,7 @@ body {
 }
 
 .auth-header p {
-    font-size: 15px;
+    font-size: 14.5px;
     color: #e2e8f0;
     font-weight: 600;
 }
@@ -73,22 +73,42 @@ body {
     border-radius: var(--radius-sm);
     font-size: 14.5px;
     font-weight: 700;
-    margin-bottom: 26px;
+    margin-bottom: 24px;
     text-align: center;
     box-shadow: 0 0 20px rgba(244, 63, 94, 0.35);
+}
+
+.auth-success-banner {
+    background: rgba(16, 185, 129, 0.22);
+    border: 2px solid #10b981;
+    color: #ffffff;
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14.5px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+    line-height: 1.5;
 }
 
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 20px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 8px;
     text-align: left;
+}
+
+.form-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .form-group label {
@@ -96,6 +116,26 @@ body {
     font-size: 14.5px;
     font-weight: 800;
     color: #ffffff;
+}
+
+.forgot-link {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f472b6;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.forgot-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
 }
 
 .form-group input {
@@ -110,6 +150,10 @@ body {
     transition: all 0.2s ease;
 }
 
+.password-input-wrapper input {
+    padding-right: 48px;
+}
+
 .form-group input::placeholder {
     color: #e2e8f0;
     opacity: 0.85;
@@ -121,18 +165,46 @@ body {
     background: #1f1140;
 }
 
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #f472b6;
+}
+
+.password-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
 .btn-auth-submit {
-    margin-top: 12px;
-    padding: 15px;
+    margin-top: 8px;
+    padding: 14px;
     background: var(--accent-gradient);
     color: #ffffff;
     font-family: var(--font-display);
-    font-size: 16.5px;
+    font-size: 16px;
     font-weight: 900;
     border-radius: var(--radius-md);
     box-shadow: 0 6px 22px rgba(124, 58, 237, 0.6);
     letter-spacing: 0.03em;
     border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .btn-auth-submit:hover {
@@ -142,11 +214,14 @@ body {
 }
 
 .auth-footer {
-    margin-top: 30px;
+    margin-top: 26px;
     text-align: center;
-    font-size: 14.5px;
+    font-size: 14px;
     color: #e2e8f0;
     font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .auth-footer a {

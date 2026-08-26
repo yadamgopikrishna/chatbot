@@ -9,8 +9,12 @@ from models import (
     save_message,
     get_conversation_messages,
     save_document,
-    get_user_documents
+    get_user_documents,
+    create_password_reset_token,
+    verify_password_reset_token,
+    update_user_password
 )
+
 from services.pdf_service import extract_pdf_data, chunk_pdf_pages
 from services.doc_service import compare_documents
 from services.spreadsheet_service import analyze_spreadsheet
@@ -206,6 +210,51 @@ def test_flask_endpoints():
     print("POST /chat legacy response received successfully")
 
 
+def test_password_reset_and_auth():
+    print("\n--- Testing Password Reset & Auth Endpoints ---")
+    client = app.test_client()
+
+    # 1. Test token creation & verification
+    token = create_password_reset_token("gopi1@gmail.com", expires_minutes=15)
+    assert token is not None
+    verified_email = verify_password_reset_token(token)
+    assert verified_email == "gopi1@gmail.com"
+    print("Reset token created & verified successfully:", token[:10] + "...")
+
+    # 2. Test forgot password page & endpoint
+    resp = client.get("/forgot-password")
+    assert resp.status_code == 200
+    assert b"Reset Password" in resp.data
+
+    resp = client.post("/forgot-password", data={"email": "gopi1@gmail.com"})
+    assert resp.status_code == 200
+    assert b"Reset Link Generated" in resp.data or b"Proceed to Reset" in resp.data
+    print("POST /forgot-password returned 200 with reset link")
+
+    # 3. Test reset password page with token
+    resp = client.get(f"/reset-password?token={token}")
+    assert resp.status_code == 200
+    assert b"Set New Password" in resp.data
+
+    # 4. Test submitting password update
+    resp = client.post("/reset-password", data={
+        "token": token,
+        "password": "new_secure_password_123",
+        "confirm_password": "new_secure_password_123"
+    })
+    assert resp.status_code == 200
+    assert b"Password Reset Successful" in resp.data
+
+    # 5. Verify token is marked as used
+    used_email = verify_password_reset_token(token)
+    assert used_email is None
+
+    # 6. Verify user can log in with new password
+    user = get_user_by_email("gopi1@gmail.com")
+    assert user["password"] == "new_secure_password_123"
+    print("Password reset workflow passed 100%!")
+
+
 if __name__ == "__main__":
     test_database_and_auth()
     test_translation_and_language_detection()
@@ -215,7 +264,9 @@ if __name__ == "__main__":
     test_image_generation_intent()
     test_resume_analysis_and_generation()
     test_rag_semantic_search()
+    test_password_reset_and_auth()
     test_flask_endpoints()
     print("\n=======================================================")
     print("ALL MULTIMODAL AI TESTS PASSED SUCCESSFULLY!")
     print("=======================================================")
+

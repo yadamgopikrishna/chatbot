@@ -139,6 +139,20 @@ def _init_oracle_tables(cursor, conn):
         conn.commit()
         logger.info("Oracle table 'DOCUMENT_CHUNKS' created")
 
+    # 6. PASSWORD_RESETS table
+    if "PASSWORD_RESETS" not in existing_tables:
+        cursor.execute("""
+            CREATE TABLE password_resets (
+                token VARCHAR2(64) PRIMARY KEY,
+                user_email VARCHAR2(150) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                used NUMBER(1) DEFAULT 0
+            )
+        """)
+        conn.commit()
+        logger.info("Oracle table 'PASSWORD_RESETS' created")
+
 
 def _init_sqlite_tables(cursor, conn):
     """Initializes tables for SQLite."""
@@ -201,6 +215,15 @@ def _init_sqlite_tables(cursor, conn):
             page_number INTEGER DEFAULT 1,
             content TEXT NOT NULL,
             metadata_json TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS password_resets (
+            token TEXT PRIMARY KEY,
+            user_email TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            used INTEGER DEFAULT 0
         )
     """)
     conn.commit()
@@ -673,3 +696,127 @@ def get_document_chunks(doc_id):
     finally:
         cursor.close()
         conn.close()
+
+
+# ==========================================================
+# Password Reset Operations
+# ==========================================================
+
+def create_password_reset_token(user_email, expires_minutes=30):
+    """Creates and stores a secure password reset token."""
+    token = uuid.uuid4().hex
+    now = datetime.datetime.now(datetime.timezone.utc)
+    expires_at = now + datetime.timedelta(minutes=expires_minutes)
+
+    conn = get_connection()
+    is_ora = is_oracle()
+    cursor = conn.cursor()
+    try:
+        if is_ora:
+            cursor.execute(
+                "INSERT INTO password_resets (token, user_email, expires_at, used) VALUES (:1, :2, :3, 0)",
+                (token, safe_str(user_email), expires_at)
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO password_resets (token, user_email, expires_at, used) VALUES (?, ?, ?, 0)",
+                (token, user_email, expires_at.isoformat())
+            )
+        conn.commit()
+        return token
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def verify_password_reset_token(token):
+    """Verifies a password reset token. Returns user_email if valid and not expired, else None."""
+    if not token:
+        return None
+
+    conn = get_connection()
+    is_ora = is_oracle()
+    cursor = conn.cursor()
+    try:
+        if is_ora:
+            cursor.execute(
+                "SELECT user_email, expires_at, used FROM password_resets WHERE token = :1",
+                (token,)
+            )
+            row = cursor.fetchone()
+            if row:
+                user_email, expires_at, used = row[0], row[1], row[2]
+                if used == 1:
+                    return None
+                # Check expiration
+                if isinstance(expires_at, datetime.datetime):
+                    if expires_at.tzinfo is None:
+                        expires_at = expires_at.replace(tzinfo=datetime.timezone.utc)
+                    if datetime.datetime.now(datetime.timezone.utc) > expires_at:
+                        return None
+                return user_email
+        else:
+            cursor.execute(
+                "SELECT user_email, expires_at, used FROM password_resets WHERE token = ?",
+                (token,)
+            )
+            row = cursor.fetchone()
+            if row:
+                user_email = row["user_email"]
+                expires_at_str = row["expires_at"]
+                used = row["used"]
+                if used == 1:
+                    return None
+                try:
+                    expires_at = datetime.datetime.fromisoformat(expires_at_str)
+                    if expires_at.tzinfo is None:
+                        expires_at = expires_at.replace(tzinfo=datetime.timezone.utc)
+                    if datetime.datetime.now(datetime.timezone.utc) > expires_at:
+                        return None
+                except Exception:
+                    pass
+                return user_email
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def mark_password_reset_used(token):
+    """Marks a password reset token as used."""
+    conn = get_connection()
+    is_ora = is_oracle()
+    cursor = conn.cursor()
+    try:
+        if is_ora:
+            cursor.execute("UPDATE password_resets SET used = 1 WHERE token = :1", (token,))
+        else:
+            cursor.execute("UPDATE password_resets SET used = 1 WHERE token = ?", (token,))
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_user_password(user_email, new_password_hash):
+    """Updates user password hash in the database."""
+    conn = get_connection()
+    is_ora = is_oracle()
+    cursor = conn.cursor()
+    try:
+        if is_ora:
+            cursor.execute(
+                "UPDATE users SET password = :1 WHERE email = :2",
+                (safe_str(new_password_hash), safe_str(user_email))
+            )
+        else:
+            cursor.execute(
+                "UPDATE users SET password = ? WHERE email = ?",
+                (new_password_hash, user_email)
+            )
+        conn.commit()
+        return True
+    finally:
+        cursor.close()
+        conn.close()
+
